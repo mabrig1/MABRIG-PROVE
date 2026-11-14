@@ -1,0 +1,14 @@
+{
+  "name": "mabrig-prove",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Proof-first consumer safety application, functional local MVP",
+  "type": "module",
+  "engines": {"node": ">=22.13"},
+  "scripts": {
+    "start": "node server/index.mjs",
+    "dev": "node --watch server/index.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check server/index.mjs && node --check server/engine.mjs && node --check public/app.js"
+  }
+}

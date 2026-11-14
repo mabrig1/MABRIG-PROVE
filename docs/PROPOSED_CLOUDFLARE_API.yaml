@@ -1,0 +1,196 @@
+openapi: 3.1.0
+info:
+  title: MABRIG PROVE API
+  version: 1.0.0-draft
+  description: Private evidence-assisted consumer decision workflow. No assurances of authenticity or safety.
+servers:
+  - url: https://preview.example.invalid
+    description: Placeholder preview origin — configure after creating isolated environment
+security:
+  - sessionCookie: []
+paths:
+  /v1/sessions/guest:
+    post:
+      summary: Create a guest session
+      security: []
+      responses:
+        '201': {description: Guest session established via secure, HttpOnly cookie}
+        '429': {description: Rate limited}
+  /v1/cases:
+    post:
+      summary: Create private draft case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category]
+              properties:
+                category: {type: string, enum: [phone, laptop, other]}
+                offer_text: {type: string, maxLength: 10000}
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CaseResponse'}
+        '401': {description: Session required}
+  /v1/cases/{caseId}:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+    get:
+      summary: Read owned case
+      responses:
+        '200':
+          description: Case summary
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CaseResponse'}
+        '404': {description: Unknown or inaccessible case}
+    delete:
+      summary: Request deletion of owned case
+      responses:
+        '202': {description: Deletion scheduled}
+        '404': {description: Unknown or inaccessible case}
+  /v1/cases/{caseId}/assets/presign:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+    post:
+      summary: Authorize upload to private quarantine key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mime, size_bytes]
+              properties:
+                mime: {type: string, enum: [image/jpeg, image/png, image/webp]}
+                size_bytes: {type: integer, minimum: 1, maximum: 8388608}
+      responses:
+        '201': {description: Short-lived scoped upload data}
+        '403': {description: Not permitted}
+  /v1/cases/{caseId}/assets/confirm:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+    post:
+      summary: Confirm uploaded object after validation and quarantine checks
+      responses:
+        '202': {description: Verification enqueued}
+  /v1/cases/{caseId}/analyze:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+    post:
+      summary: Start idempotent asynchronous analysis
+      responses:
+        '202':
+          description: Analysis accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [job_id, status]
+                properties:
+                  job_id: {type: string}
+                  status: {type: string, const: queued}
+        '429': {description: Per-session or global analysis quota exceeded}
+  /v1/cases/{caseId}/report:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+    get:
+      summary: Retrieve source-grounded assessment for owner
+      responses:
+        '200':
+          description: Latest assessment
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Assessment'}
+  /v1/cases/{caseId}/proof-requests:
+    parameters:
+      - $ref: '#/components/parameters/CaseId'
+    post:
+      summary: Create revocable invitation and a scoped secret token
+      responses:
+        '201': {description: Invitation created}
+  /v1/proof/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema: {type: string, minLength: 24}
+    get:
+      summary: View only the scoped seller request
+      security: []
+      responses:
+        '200': {description: Seller-facing proof request}
+        '404': {description: Invalid, expired or revoked invitation}
+  /v1/proof/{token}/respond:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        schema: {type: string, minLength: 24}
+    post:
+      summary: Submit voluntary seller response with accepted notice and scoped token
+      security: []
+      responses:
+        '201': {description: Response accepted}
+        '404': {description: Invalid, expired or revoked invitation}
+  /v1/reports:
+    post:
+      summary: Flag abuse, request correction or submit a privacy concern
+      security: []
+      responses:
+        '201': {description: Report received}
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: prove_session
+  parameters:
+    CaseId:
+      in: path
+      name: caseId
+      required: true
+      schema: {type: string, minLength: 6}
+  schemas:
+    CaseResponse:
+      type: object
+      required: [data, request_id]
+      properties:
+        data:
+          type: object
+          required: [id, category, status]
+          properties:
+            id: {type: string}
+            category: {type: string, enum: [phone, laptop, other]}
+            status: {type: string}
+            attention_level:
+              type: [string, 'null']
+              enum: [STANDARD_CHECKS, IMPORTANT_GAPS, URGENT_CAUTION, INSUFFICIENT_INFORMATION, null]
+        request_id: {type: string}
+    Assessment:
+      type: object
+      required: [case_id, attention_level, claims, limitations]
+      properties:
+        case_id: {type: string}
+        attention_level:
+          type: string
+          enum: [STANDARD_CHECKS, IMPORTANT_GAPS, URGENT_CAUTION, INSUFFICIENT_INFORMATION]
+        claims:
+          type: array
+          items:
+            type: object
+            required: [id, text, status]
+            properties:
+              id: {type: string}
+              text: {type: string}
+              source_asset_id: {type: [string, 'null']}
+              status:
+                type: string
+                enum: [not_supported, supported_by_submission, contradicted_by_submission, cannot_assess, independently_corroborated]
+        limitations:
+          type: array
+          items: {type: string}

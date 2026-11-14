@@ -1,0 +1,6 @@
+node_modules/
+data/*.sqlite*
+/data/evidence/
+.env
+*.log
+.DS_Store
