@@ -86,3 +86,9 @@ A **Share safety tip** action exports only generic educational advice. It delibe
 ### Deployment reality
 
 This repository is a **runnable Node.js 22+ Docker/long-running-service MVP with local SQLite persistence**, not a one-click Vercel static website or Cloudflare Worker. For hosted use, supply a persistent private data volume, a single writable SQLite instance, HTTPS, monitoring and stronger public-launch protections. See [`docs/CLOUDFLARE_MIGRATION.md`](docs/CLOUDFLARE_MIGRATION.md) for the D1/R2/Workers production migration. **Do not deploy this local guest-session preview as a public consumer safety service without security and privacy review.**
+
+## Cloudflare v0.3 — full Worker entrypoint (fixes disabled Variables/Bindings UI)
+
+The root `wrangler.jsonc` declares `main: ./worker/index.mjs` plus `assets.directory: ./public`. This is a real Worker, not an assets-only deploy. The Worker serves the same buyer/seller API through Cloudflare D1 and optionally stores private image evidence in R2. It **fails closed** until D1 has been bound and migrated, and keeps public writes `locked` by default. The Node/SQLite local app remains available via `npm start`.
+
+See **[docs/CLOUDFLARE_DEPLOY.md](docs/CLOUDFLARE_DEPLOY.md)** for exact Cloudflare Build/Deploy settings, D1 creation and migration, R2 binding and protected-pilot activation. Do not publish client data until a privacy and security review is complete.

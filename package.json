@@ -1,14 +1,19 @@
 {
   "name": "mabrig-prove",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "Proof-first consumer safety application, functional local MVP",
+  "description": "Proof-first consumer safety app: Node local MVP and Cloudflare Workers+D1/R2 preview",
   "type": "module",
-  "engines": {"node": ">=22.13"},
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "start": "node server/index.mjs",
     "dev": "node --watch server/index.mjs",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check server/index.mjs && node --check server/engine.mjs && node --check public/app.js"
+    "check": "node --check server/index.mjs && node --check server/engine.mjs && node --check public/app.js && node --check worker/index.mjs",
+    "cloudflare:dry-run": "npx --yes wrangler@4 deploy --dry-run",
+    "cloudflare:deploy": "npx --yes wrangler@4 deploy"
   }
 }
+
