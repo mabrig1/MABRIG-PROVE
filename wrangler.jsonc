@@ -15,9 +15,15 @@
   "triggers": {"crons":["0 3 * * *"]},
   "observability": {
     "enabled": true
-  }
-  // Add your actual D1/R2 binding IDs only after creating those resources.
-  // "d1_databases": [{"binding":"DB","database_name":"mabrig-prove-db","database_id":"YOUR_DATABASE_ID"}],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mabrig-prove-db",
+      "database_id": "e20f095e-ed02-42ca-af68-b2e62de7dcca"
+    }
+  ]
+  // Optional later: after creating a private R2 bucket, configure:
   // "r2_buckets": [{"binding":"EVIDENCE","bucket_name":"mabrig-prove-private-evidence"}]
 }
 
